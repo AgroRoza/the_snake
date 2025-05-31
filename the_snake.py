@@ -1,5 +1,4 @@
 import pygame
-
 from random import choice, randint
 from datetime import datetime
 
@@ -157,8 +156,9 @@ class Snake(GameObject):
         with open(self.results_file, 'a', encoding='utf-8') as cm:
             # Записать в файл строку.
             cm.write(
-                f'Результат игры: {datetime.now()} вы достигли длины в {
-                    self.length} блоков.\n')
+                f'Результат игры: {datetime.now()} вы достигли длины в '
+                f'{self.length} блоков.\n'
+            )
         self.length = 1
 
     def randomize_snake_direction(self):
