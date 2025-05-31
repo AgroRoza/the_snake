@@ -1,6 +1,8 @@
+import pygame
+
 from random import choice, randint
 from datetime import datetime
-import pygame
+
 
 # Константы для размеров поля и сетки:
 SCREEN_WIDTH, SCREEN_HEIGHT = 640, 480
@@ -156,7 +158,7 @@ class Snake(GameObject):
             # Записать в файл строку.
             cm.write(
                 f'Результат игры: {datetime.now()} вы достигли длины в {
-                    self.length} блоков' + "\n")
+                    self.length} блоков.\n')
         self.length = 1
 
     def randomize_snake_direction(self):
