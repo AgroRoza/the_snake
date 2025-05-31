@@ -3,7 +3,6 @@ from random import choice, randint
 
 import pygame
 
-
 # Константы для размеров поля и сетки:
 SCREEN_WIDTH, SCREEN_HEIGHT = 640, 480
 GRID_SIZE = 20
@@ -153,7 +152,7 @@ class Snake(GameObject):
         self.last = None
         self.results_file = 'results.txt'
 
-        current_date = datetime.now().strftime("%d.%m.%Y, %H:%M:%S")
+        current_date = datetime.now().strftime('%d.%m.%Y, %H:%M:%S')
 
         # Открыть на запись файл example.txt
         with open(self.results_file, 'a', encoding='utf-8') as cm:
