@@ -1,6 +1,7 @@
-import pygame
-from random import choice, randint
 from datetime import datetime
+from random import choice, randint
+
+import pygame
 
 
 # Константы для размеров поля и сетки:
@@ -152,11 +153,13 @@ class Snake(GameObject):
         self.last = None
         self.results_file = 'results.txt'
 
+        current_date = datetime.now().strftime("%d.%m.%Y, %H:%M:%S")
+
         # Открыть на запись файл example.txt
         with open(self.results_file, 'a', encoding='utf-8') as cm:
             # Записать в файл строку.
             cm.write(
-                f'Результат игры: {datetime.now()} вы достигли длины в '
+                f'Результат игры: {current_date} вы достигли длины в '
                 f'{self.length} блоков.\n'
             )
         self.length = 1
