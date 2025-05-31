@@ -140,7 +140,7 @@ class Snake(GameObject):
         """
         return self.positions[0] if self.positions else self.position
 
-    def game_over(self):
+    def reset(self):
         """
         Перезапускает змейку при поражении, используя случайное направление
         движения и сохраняет результат длины в файл.
@@ -213,7 +213,7 @@ def main():
 
         # Проверка столкновения с собой.
         if snake.get_head_position() in snake.positions[1:]:
-            snake.game_over()
+            snake.reset()
 
         screen.fill(BOARD_BACKGROUND_COLOR)
         apple.draw()
