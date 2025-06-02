@@ -162,11 +162,13 @@ class Apple(GameObject):
 
     def __init__(
             self,
-            occupied_cells=[],
+            occupied_cells=None,
             position=None,
             body_color=APPLE_COLOR,
     ):
         super().__init__(body_color, position)
+        if occupied_cells is None:
+            occupied_cells = set()
         # Позволяет передать желаемую позицию яблока при его отображении.
         self.position = position
         self.randomize_position(occupied_cells)
