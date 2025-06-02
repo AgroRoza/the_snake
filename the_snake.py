@@ -49,7 +49,7 @@ class GameObject:
     def __init__(
             self,
             body_color=None,
-            position=None
+            position=SCREEN_CENTER
     ) -> None:
         self.body_color = body_color
         self.position = position
@@ -60,7 +60,7 @@ class GameObject:
         переопределяется дальше по коду в других объектах
         """
         raise NotImplementedError(
-            'Метод должен быть переопределён в дочерних классах'
+            'Метод draw() должен быть переопределён в дочерних классах'
         )
 
     def draw_rect(self, position=None, body_color=None):
@@ -68,37 +68,6 @@ class GameObject:
         rect = pg.Rect(position or self.position, (GRID_SIZE, GRID_SIZE))
         pg.draw.rect(screen, body_color or self.body_color, rect)
         pg.draw.rect(screen, body_color or BORDER_COLOR, rect, 1)
-
-
-class Apple(GameObject):
-    """Описывает яблоко."""
-
-    def __init__(
-            self,
-            snake=None,
-            position=None,
-            body_color=APPLE_COLOR
-    ):
-        super().__init__(body_color)
-        self.snake = snake
-        if not position:
-            self.randomize_position()
-        else:
-            self.position = position
-
-    def draw(self):
-        """Отрисовывает яблоко - его позицию и цвета."""
-        self.draw_rect()
-
-    def randomize_position(self):
-        """При отрисовке яблока создаёт случайную позицию для него."""
-        random_width_grid = randint(0, GRID_WIDTH - 1) * GRID_SIZE
-        random_heigth_grid = randint(0, GRID_HEIGHT - 1) * GRID_SIZE
-        new_position = (random_width_grid, random_heigth_grid)
-        if new_position in self.snake.positions:
-            self.randomize_position()
-        else:
-            self.position = new_position
 
 
 class Snake(GameObject):
@@ -110,14 +79,18 @@ class Snake(GameObject):
             position=SCREEN_CENTER
     ):
         super().__init__(body_color, position)
-        self.direction = RIGHT
-        self.length = 1
         self.reset()
 
-    def update_direction(self):
+    # def update_direction(self):
+    #     """Обновляет направление перемещения змейки при нажатии на клавиши."""
+    #     if self.next_direction:
+    #         self.direction = self.next_direction
+    #         self.next_direction = None
+
+    def update_direction(self, next_direction):
         """Обновляет направление перемещения змейки при нажатии на клавиши."""
-        if self.next_direction:
-            self.direction = self.next_direction
+        if next_direction:
+            self.direction = next_direction
             self.next_direction = None
 
     def move(self):
@@ -129,28 +102,18 @@ class Snake(GameObject):
         new_position = (new_x, new_y)
 
         # Сохраняем последнюю позицию для затирания
-        self.last = (
-            self.positions.pop()
-            if len(self.positions) > self.length
-            else None
-        )
+        self.last = self.positions.pop()
+
         # Добавляем к змейке текущую её позицию
         self.positions.insert(0, new_position)
-        """
-        Если количество блоков змейки больше длинны с поправкой на первый
-        блок - удаляем последний элемент из списка блоков змейки.
-        """
 
     def draw(self):
         """
         Рисуем змейку - каждый блок из списка змейки, отдельно считаем
         голову и последний сегмент.
         """
-        for position in self.positions[:-1]:
+        for position in self.positions:
             self.draw_rect(position)
-
-        # Отрисовка головы змейки
-        self.draw_rect(self.positions[0])
 
         # Затирание последнего сегмента
         if self.last:
@@ -166,24 +129,12 @@ class Snake(GameObject):
     def reset(self):
         """
         Перезапускает змейку при поражении, используя случайное направление
-        движения и сохраняет результат длины в файл.
+        движения.
         """
         self.randomize_snake_direction()
         self.next_direction = None
         self.positions = [self.position]
         self.last = None
-        self.results_file = 'results.txt'
-
-        current_date = datetime.now().strftime('%d.%m.%Y, %H:%M:%S')
-
-        # Открыть на запись файл example.txt
-        with open(self.results_file, 'a', encoding='utf-8') as cm:
-            # Записать в файл строку.
-            cm.write(
-                f'Результат игры: {current_date} вы достигли длины в '
-                f'{self.length} блоков.\n'
-            )
-        self.length = 1
 
     def randomize_snake_direction(self):
         """
@@ -192,6 +143,66 @@ class Snake(GameObject):
         """
         possible_directions = [UP, DOWN, LEFT, RIGHT]
         self.direction = choice(possible_directions)
+
+    def grow(self):
+        """Увеличивает длину змейки."""
+        self.positions.append(self.last)
+        self.last = None
+
+
+class Apple(GameObject):
+    """Описывает яблоко."""
+
+    # Изначально я сделал snake=None, игра работала, но тесты не проходили.
+    def __init__(
+            self,
+            snake=Snake(),
+            position=None,
+            body_color=APPLE_COLOR,
+    ):
+        super().__init__(body_color)
+        self.snake = snake
+        # Позволяет передать желаемую позицию яблока при его отображении.
+        if not position:
+            self.randomize_position()
+        else:
+            self.position = position
+
+    def draw(self):
+        """Отрисовывает яблоко - его позицию и цвета."""
+        self.draw_rect()
+
+    def randomize_position(self):
+        """
+        При отрисовке яблока создаёт случайную позицию для него.
+        Учитывает текущее положение змейки чтобя яблоко не появилось внутри.
+        """
+        new_position = (
+            randint(0, GRID_WIDTH - 1) * GRID_SIZE,
+            randint(0, GRID_HEIGHT - 1) * GRID_SIZE
+        )
+        if new_position in self.snake.positions:
+            self.randomize_position()
+        else:
+            self.position = new_position
+
+
+def end_game(score, snake):
+    """
+    Завершает текущую попытку, сохраняя результат в файл и перезапускает
+    змейку
+    """
+    results_file = 'results.txt'
+    current_date = datetime.now().strftime('%d.%m.%Y, %H:%M:%S')
+
+    # Открыть на запись файл example.txt
+    with open(results_file, 'a', encoding='utf-8') as cm:
+        # Записать в файл строку.
+        cm.write(
+            f'Результат игры: {current_date} вы достигли длины в '
+            f'{score} блоков.\n'
+        )
+    snake.reset()
 
 
 def handle_keys(game_object):
@@ -225,9 +236,10 @@ def main():
     """Основное тело игры"""
     # Инициализация pg:
     pg.init()
-    # Тут нужно создать экземпляры классов.
+    # Создаём объекты и заливаем фон нужным цветом
     snake = Snake()
     apple = Apple(snake)
+    screen.fill(BOARD_BACKGROUND_COLOR)
 
     while True:
         clock.tick(SPEED)
@@ -238,15 +250,15 @@ def main():
 
         # Проверка столкновения с яблоком.
         if snake.get_head_position() == apple.position:
-            snake.length += 1
+            snake.grow()
             apple.randomize_position()
 
         # Проверка столкновения с собой.
         elif snake.get_head_position() in snake.positions[1:]:
-            snake.reset()
+            end_game(len(snake.positions), snake)
             apple.randomize_position()
+            screen.fill(BOARD_BACKGROUND_COLOR)
 
-        screen.fill(BOARD_BACKGROUND_COLOR)
         apple.draw()
         snake.draw()
         pg.display.update()
