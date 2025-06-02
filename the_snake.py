@@ -95,6 +95,7 @@ class Snake(GameObject):
     ):
         super().__init__(body_color, position)
         self.reset()
+        self.direction = RIGHT
 
     def update_direction(self, next_direction):
         """
@@ -119,12 +120,8 @@ class Snake(GameObject):
         self.positions.insert(0, new_position)
 
     def draw(self):
-        """
-        Рисуем змейку - каждый блок из списка змейки, отдельно считаем
-        голову и последний сегмент.
-        """
-        for position in self.positions:
-            self.draw_rect(position)
+        """Рисуем змейку - голову и затираем последний сегмент."""
+        self.draw_rect(self.positions[0])
 
         # Затирание последнего сегмента
         if self.last:
@@ -165,35 +162,31 @@ class Apple(GameObject):
 
     def __init__(
             self,
-            snake=None,
+            occupied_cells=[],
             position=None,
             body_color=APPLE_COLOR,
     ):
-        super().__init__(body_color)
-        # Без этого тесты не отрабатывали
-        self.snake = snake or Snake()
+        super().__init__(body_color, position)
         # Позволяет передать желаемую позицию яблока при его отображении.
         self.position = position
-        if not position:
-            self.randomize_position()
+        self.randomize_position(occupied_cells)
 
     def draw(self):
         """Отрисовывает яблоко - его позицию и цвета."""
         self.draw_rect()
 
-    def randomize_position(self):
+    def randomize_position(self, occupied_cells):
         """
         При отрисовке яблока создаёт случайную позицию для него.
         Учитывает текущее положение змейки чтобя яблоко не появилось внутри.
         """
-        new_position = (
-            randint(0, GRID_WIDTH - 1) * GRID_SIZE,
-            randint(0, GRID_HEIGHT - 1) * GRID_SIZE
-        )
-        if new_position in self.snake.positions:
-            self.randomize_position()
-        else:
-            self.position = new_position
+        while True:
+            self.position = (
+                randint(0, GRID_WIDTH - 1) * GRID_SIZE,
+                randint(0, GRID_HEIGHT - 1) * GRID_SIZE
+            )
+            if self.position not in occupied_cells:
+                break
 
 
 def end_game(score, snake):
@@ -241,7 +234,7 @@ def main():
     # Создаём объекты и заливаем фон нужным цветом
     snake = Snake()
     # Передаём в яблочко змейку, чтобы яблочко не появилось в змейке
-    apple = Apple(snake)
+    apple = Apple(snake.positions)
     screen.fill(BOARD_BACKGROUND_COLOR)
 
     while True:
@@ -252,12 +245,12 @@ def main():
         # Проверка столкновения с яблоком.
         if snake.get_head_position() == apple.position:
             snake.grow()
-            apple.randomize_position()
+            apple.randomize_position(snake.positions)
 
         # Проверка столкновения с собой.
         elif snake.get_head_position() in snake.positions[1:]:
             end_game(len(snake.positions), snake)
-            apple.randomize_position()
+            apple.randomize_position(snake.positions)
             screen.fill(BOARD_BACKGROUND_COLOR)
 
         apple.draw()
