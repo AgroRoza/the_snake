@@ -15,6 +15,21 @@ DOWN = (0, 1)
 LEFT = (-1, 0)
 RIGHT = (1, 0)
 
+# Кнопки движения
+DIRECTION_KEYS = {
+    pg.K_UP: UP,
+    pg.K_DOWN: DOWN,
+    pg.K_LEFT: LEFT,
+    pg.K_RIGHT: RIGHT
+}
+
+# Запрещённые движения
+PROHIBITED_DIRECTIONS = {
+    UP: DOWN,
+    DOWN: UP,
+    LEFT: RIGHT,
+    RIGHT: LEFT
+}
 # Цвет фона - серый:
 BOARD_BACKGROUND_COLOR = (50, 50, 50)
 
@@ -81,17 +96,13 @@ class Snake(GameObject):
         super().__init__(body_color, position)
         self.reset()
 
-    # def update_direction(self):
-    #     """Обновляет направление перемещения змейки при нажатии на клавиши."""
-    #     if self.next_direction:
-    #         self.direction = self.next_direction
-    #         self.next_direction = None
-
     def update_direction(self, next_direction):
-        """Обновляет направление перемещения змейки при нажатии на клавиши."""
-        if next_direction:
+        """
+        Обновляет направление перемещения змейки при нажатии на клавиши.
+        Запрещает поворот на 180 градусов
+        """
+        if self.direction != PROHIBITED_DIRECTIONS[next_direction]:
             self.direction = next_direction
-            self.next_direction = None
 
     def move(self):
         """Обновляет позицию змейки."""
@@ -132,7 +143,6 @@ class Snake(GameObject):
         движения.
         """
         self.randomize_snake_direction()
-        self.next_direction = None
         self.positions = [self.position]
         self.last = None
 
@@ -207,8 +217,7 @@ def end_game(score, snake):
 
 def handle_keys(game_object):
     """
-    Обрабатываем нажатие клавиш на клавиатуре, и защищаем от поворота на
-    180 градусов и проигрыша.
+    Обрабатывает нажатие клавиш на клавиатуре
     ESC - выход из игры
     N - начать новую игру
     """
@@ -217,14 +226,8 @@ def handle_keys(game_object):
             pg.quit()
             raise SystemExit
         elif event.type == pg.KEYDOWN:
-            if event.key == pg.K_UP and game_object.direction != DOWN:
-                game_object.next_direction = UP
-            elif event.key == pg.K_DOWN and game_object.direction != UP:
-                game_object.next_direction = DOWN
-            elif event.key == pg.K_LEFT and game_object.direction != RIGHT:
-                game_object.next_direction = LEFT
-            elif event.key == pg.K_RIGHT and game_object.direction != LEFT:
-                game_object.next_direction = RIGHT
+            if event.key in DIRECTION_KEYS:
+                game_object.update_direction(DIRECTION_KEYS[event.key])
             elif event.key == pg.K_n:
                 main()
             elif event.key == pg.K_ESCAPE:
@@ -238,14 +241,13 @@ def main():
     pg.init()
     # Создаём объекты и заливаем фон нужным цветом
     snake = Snake()
+    # Передаём в яблочко змейку, чтобы яблочко не появилось в змейке
     apple = Apple(snake)
     screen.fill(BOARD_BACKGROUND_COLOR)
 
     while True:
         clock.tick(SPEED)
         handle_keys(snake)
-
-        snake.update_direction()
         snake.move()
 
         # Проверка столкновения с яблоком.
