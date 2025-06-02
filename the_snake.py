@@ -163,20 +163,19 @@ class Snake(GameObject):
 class Apple(GameObject):
     """Описывает яблоко."""
 
-    # Изначально я сделал snake=None, игра работала, но тесты не проходили.
     def __init__(
             self,
-            snake=Snake(),
+            snake=None,
             position=None,
             body_color=APPLE_COLOR,
     ):
         super().__init__(body_color)
-        self.snake = snake
+        # Без этого тесты не отрабатывали
+        self.snake = snake or Snake()
         # Позволяет передать желаемую позицию яблока при его отображении.
+        self.position = position
         if not position:
             self.randomize_position()
-        else:
-            self.position = position
 
     def draw(self):
         """Отрисовывает яблоко - его позицию и цвета."""
